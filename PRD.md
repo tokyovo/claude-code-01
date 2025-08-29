@@ -34,6 +34,7 @@ The Personal Finance Tracker is a comprehensive web application designed to help
 ## Core Features & User Stories
 
 ### 1. User Authentication & Account Management
+
 **Epic**: Secure user onboarding and profile management
 
 #### User Stories:
@@ -50,6 +51,7 @@ The Personal Finance Tracker is a comprehensive web application designed to help
 - Profile updates reflect immediately across the application
 
 ### 2. Transaction Management
+
 **Epic**: Comprehensive income and expense tracking
 
 #### User Stories:
@@ -68,6 +70,7 @@ The Personal Finance Tracker is a comprehensive web application designed to help
 - Bulk transaction operations (edit, delete, categorize)
 
 ### 3. Budgeting System
+
 **Epic**: Intelligent budget creation and monitoring
 
 #### User Stories:
@@ -85,6 +88,7 @@ The Personal Finance Tracker is a comprehensive web application designed to help
 - Budget templates for easy month-to-month setup
 
 ### 4. Financial Dashboard & Analytics
+
 **Epic**: Comprehensive financial insights and visualization
 
 #### User Stories:
