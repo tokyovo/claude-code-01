@@ -13,13 +13,13 @@
 ```
                     /\
                    /  \
-                  / E2E \ (10% - 48 hours)
+                  / E2E \ (10% - Critical workflows)
                  /______\
                 /        \
-               /Integration\ (20% - 96 hours)
+               /Integration\ (20% - API and data layer)
               /__________\
              /            \
-            /     Unit     \ (70% - 336 hours)
+            /     Unit     \ (70% - Component and logic)
            /________________\
 ```
 
@@ -773,7 +773,7 @@ jobs:
 - [ ] Load testing: Handle expected concurrent users
 
 #### Production Deployment Requirements
-- [ ] Staging validation: 48+ hours stable
+- [ ] Staging validation: Stable for extended period
 - [ ] E2E tests: 100% critical path coverage
 - [ ] Security review: Complete audit passed
 - [ ] Database migration: Tested and verified

@@ -6,7 +6,7 @@
 The Personal Finance Tracker is a comprehensive web application designed to help users take control of their financial life through intelligent expense and income tracking, budgeting, and financial analytics.
 
 ### Success Metrics
-- **User Engagement**: 70% weekly active users within 6 months
+- **User Engagement**: 70% weekly active users post-launch
 - **Calculation Accuracy**: 99.5% accuracy in financial calculations
 - **Performance**: Sub-2 second page load times
 - **User Satisfaction**: 4.5+ star rating in user feedback
