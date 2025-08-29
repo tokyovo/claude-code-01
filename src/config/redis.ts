@@ -351,3 +351,6 @@ export const closeConnection = async (): Promise<void> => {
 
 // Export Redis instance for direct access if needed
 export default redis;
+
+// Export redis client for JWT service compatibility
+export const redisClient = redis;

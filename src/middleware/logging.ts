@@ -1,6 +1,6 @@
 import morgan from 'morgan';
 import { Request, Response } from 'express';
-import { config } from '@/config/env';
+import { config } from '../config/env';
 import fs from 'fs';
 import path from 'path';
 
@@ -124,5 +124,32 @@ export const logError = (error: Error, req?: Request): void => {
       path.join(process.cwd(), config.LOG_FILE.replace('.log', '_error.log')),
       JSON.stringify(errorLog) + '\n'
     );
+  }
+};
+
+// Simple logger interface for services
+export const logger = {
+  info: (message: string, meta?: any) => {
+    const timestamp = new Date().toISOString();
+    if (config.NODE_ENV === 'development') {
+      console.log(`[${timestamp}] INFO: ${message}`, meta ? JSON.stringify(meta, null, 2) : '');
+    }
+  },
+  
+  error: (message: string, meta?: any) => {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] ERROR: ${message}`, meta ? JSON.stringify(meta, null, 2) : '');
+  },
+  
+  warn: (message: string, meta?: any) => {
+    const timestamp = new Date().toISOString();
+    console.warn(`[${timestamp}] WARN: ${message}`, meta ? JSON.stringify(meta, null, 2) : '');
+  },
+  
+  debug: (message: string, meta?: any) => {
+    const timestamp = new Date().toISOString();
+    if (config.NODE_ENV === 'development') {
+      console.debug(`[${timestamp}] DEBUG: ${message}`, meta ? JSON.stringify(meta, null, 2) : '');
+    }
   }
 };

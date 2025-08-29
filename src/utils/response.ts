@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { ApiResponse } from '@/types/express';
+import { ApiResponse } from '../types/express';
 
 export class ResponseUtil {
   /**
@@ -135,4 +135,24 @@ export class ResponseUtil {
   ): void {
     this.error(res, message, error, 500);
   }
+}
+
+/**
+ * Format response helper function
+ */
+export function formatResponse<T>(
+  data: T | null,
+  message: string = 'Success',
+  success: boolean = true,
+  code?: string,
+  meta?: any
+): ApiResponse<T> {
+  return {
+    success,
+    message,
+    ...(data !== null && { data }),
+    ...(code && { code }),
+    ...(meta && { meta }),
+    timestamp: new Date().toISOString()
+  };
 }

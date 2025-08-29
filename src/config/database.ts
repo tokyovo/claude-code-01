@@ -1,5 +1,7 @@
 import { Pool, PoolClient, PoolConfig } from 'pg';
 import { config } from './env';
+// Import Knex configuration for migration and query building capabilities
+import { db, dbUtils, testConnection as knexTestConnection, healthCheck as knexHealthCheck, migrationUtils } from './knex';
 
 // Database connection pool configuration
 const poolConfig: PoolConfig = {
@@ -219,5 +221,8 @@ export const dbUtils = {
   }
 };
 
-// Export pool for direct access if needed
+// Export Knex utilities for modern database operations
+export { db, dbUtils as knexUtils, knexTestConnection, knexHealthCheck, migrationUtils };
+
+// Export pool for direct access if needed (backward compatibility)
 export default pool;
