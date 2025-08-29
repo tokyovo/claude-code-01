@@ -1,0 +1,9 @@
+/* App-specific styles */
+
+/* App container with design system integration */
+.app-container {
+  @apply min-h-screen bg-gray-50;
+}
+
+/* Additional app-specific overrides can be added here */
+/* Use design system components and tokens whenever possible */
