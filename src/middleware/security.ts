@@ -319,19 +319,19 @@ const sanitizeObject = (obj: any): any => {
 // SQL injection protection middleware
 export const preventSqlInjection = (req: Request, _res: Response, next: NextFunction): void => {
   const sqlInjectionPatterns = [
-    /(\%27)|(\')|(\-\-)|(\%23)|(#)/i,
-    /((\%3D)|(=))[^\n]*((\%27)|(\')|(\-\-)|(\%3B)|(;))/i,
-    /\w*((\%27)|(\'))((\%6F)|o|(\%4F))((\%72)|r|(\%52))/i,
-    /((\%27)|(\'))union/i,
+    // More specific patterns to avoid false positives
+    /(\%27|\')(\s*)(union|select|insert|update|delete|drop|create|alter)/i,
+    /union(\s+)select/i,
+    /select(\s+).*from(\s+)/i,
+    /insert(\s+)into(\s+)/i,
+    /update(\s+).*set(\s+)/i,
+    /delete(\s+)from(\s+)/i,
+    /drop(\s+)(table|database|schema)/i,
+    /create(\s+)(table|database|schema)/i,
+    /alter(\s+)(table|database)/i,
     /exec(\s|\+)+(s|x)p\w+/i,
-    /union([^a-zA-Z]|[\s])+select/i,
-    /select.*from/i,
-    /insert.*into/i,
-    /delete.*from/i,
-    /update.*set/i,
-    /drop.*table/i,
-    /create.*table/i,
-    /alter.*table/i,
+    /(\-\-|\#).*$/m, // SQL comments at end of line
+    /;\s*(select|insert|update|delete|drop|create|alter)/i, // Multiple statements
   ];
   
   const checkForSqlInjection = (value: any): boolean => {

@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { createLazyRoute } from '@/components/routing/LazyRoute';
+import { createLazyRoute } from '../components/routing/LazyRoute';
 
 /**
  * Lazy-loaded route components for code splitting optimization
@@ -12,37 +12,37 @@ import { createLazyRoute } from '@/components/routing/LazyRoute';
  */
 
 // Auth Pages
-export const LazyLogin = lazy(() => import('@/pages/auth/Login'));
-export const LazyRegister = lazy(() => import('@/pages/auth/Register'));
-export const LazyForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'));
-export const LazyResetPassword = lazy(() => import('@/pages/auth/ResetPassword'));
-export const LazyVerifyEmail = lazy(() => import('@/pages/auth/VerifyEmail'));
+export const LazyLogin = lazy(() => import('../pages/auth/Login'));
+export const LazyRegister = lazy(() => import('../pages/auth/Register'));
+export const LazyForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'));
+export const LazyResetPassword = lazy(() => import('../pages/auth/ResetPassword'));
+export const LazyVerifyEmail = lazy(() => import('../pages/auth/VerifyEmail'));
 
 // Main Application Pages
-export const LazyDashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
-export const LazyTransactions = lazy(() => import('@/pages/transactions/Transactions'));
-export const LazyTransactionDetail = lazy(() => import('@/pages/transactions/TransactionDetail'));
-export const LazyAddTransaction = lazy(() => import('@/pages/transactions/AddTransaction'));
-export const LazyEditTransaction = lazy(() => import('@/pages/transactions/EditTransaction'));
+export const LazyDashboard = lazy(() => import('../pages/dashboard/Dashboard'));
+export const LazyTransactions = lazy(() => import('../pages/transactions/Transactions'));
+export const LazyTransactionDetail = lazy(() => import('../pages/transactions/TransactionDetail'));
+export const LazyAddTransaction = lazy(() => import('../pages/transactions/AddTransaction'));
+export const LazyEditTransaction = lazy(() => import('../pages/transactions/EditTransaction'));
 
 // Budget Management
-export const LazyBudgets = lazy(() => import('@/pages/budgets/Budgets'));
-export const LazyBudgetDetail = lazy(() => import('@/pages/budgets/BudgetDetail'));
-export const LazyAddBudget = lazy(() => import('@/pages/budgets/AddBudget'));
-export const LazyEditBudget = lazy(() => import('@/pages/budgets/EditBudget'));
+export const LazyBudgets = lazy(() => import('../pages/budgets/Budgets'));
+export const LazyBudgetDetail = lazy(() => import('../pages/budgets/BudgetDetail'));
+export const LazyAddBudget = lazy(() => import('../pages/budgets/AddBudget'));
+export const LazyEditBudget = lazy(() => import('../pages/budgets/EditBudget'));
 
 // Categories
-export const LazyCategories = lazy(() => import('@/pages/categories/Categories'));
+export const LazyCategories = lazy(() => import('../pages/categories/Categories'));
 
 // Reports & Analytics
-export const LazyReports = lazy(() => import('@/pages/reports/Reports'));
+export const LazyReports = lazy(() => import('../pages/reports/Reports'));
 
 // Settings & Profile
-export const LazySettings = lazy(() => import('@/pages/settings/Settings'));
+export const LazySettings = lazy(() => import('../pages/settings/Settings'));
 
 // Error Pages
-export const LazyNotFound = lazy(() => import('@/pages/common/NotFound'));
-export const LazyForbidden = lazy(() => import('@/pages/common/Forbidden'));
+export const LazyNotFound = lazy(() => import('../pages/common/NotFound'));
+export const LazyForbidden = lazy(() => import('../pages/common/Forbidden'));
 
 /**
  * Pre-configured lazy route components with consistent loading behavior

@@ -6,14 +6,14 @@ import {
   Navigate,
 } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import Layout from '@/components/layout/Layout';
-import { ROUTES } from '@/constants';
-import store from '@/store';
-import { useAuth } from '@/hooks/redux';
-import NotificationManager from '@/components/common/NotificationManager';
-import SessionManager from '@/components/common/SessionManager';
-import { ProtectedRoute, AuthRoute, RouteGuard } from '@/components/routing';
-import Breadcrumb from '@/components/navigation/Breadcrumb';
+import Layout from './components/layout/Layout';
+import { ROUTES } from './constants';
+import store from './store';
+import { useAuth } from './hooks/auth';
+import NotificationManager from './components/common/NotificationManager';
+import SessionManager from './components/common/SessionManager';
+import { ProtectedRoute, GuestRoute, AuthRoute, RouteGuard } from './components/routing';
+import Breadcrumb from './components/navigation/Breadcrumb';
 import {
   // Auth Routes
   LoginRoute,
@@ -45,7 +45,7 @@ import {
   // Error Routes
   NotFoundRoute,
   ForbiddenRoute,
-} from '@/routes/lazyRoutes';
+} from './routes/lazyRoutes';
 import './App.css';
 
 // Layout wrapper for protected routes
@@ -73,33 +73,33 @@ const AppRouter: React.FC = () => {
         <Route
           path={ROUTES.LOGIN}
           element={
-            <AuthRoute>
+            <GuestRoute>
               <LoginRoute />
-            </AuthRoute>
+            </GuestRoute>
           }
         />
         <Route
           path={ROUTES.REGISTER}
           element={
-            <AuthRoute>
+            <GuestRoute>
               <RegisterRoute />
-            </AuthRoute>
+            </GuestRoute>
           }
         />
         <Route
           path={ROUTES.FORGOT_PASSWORD}
           element={
-            <AuthRoute>
+            <GuestRoute>
               <ForgotPasswordRoute />
-            </AuthRoute>
+            </GuestRoute>
           }
         />
         <Route
           path={ROUTES.RESET_PASSWORD}
           element={
-            <AuthRoute>
+            <GuestRoute>
               <ResetPasswordRoute />
-            </AuthRoute>
+            </GuestRoute>
           }
         />
         <Route

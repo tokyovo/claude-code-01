@@ -6,7 +6,13 @@ import type {
   LoginRequest,
   RegisterRequest,
   AuthResponse,
+  BackendAuthResponse,
   RefreshTokenRequest,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+  SecurityMetricsResponse,
   
   // User types
   UpdateProfileRequest,
@@ -85,20 +91,27 @@ const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
       );
 
       if (refreshResult.data) {
-        // Update tokens in state
-        api.dispatch(
-          api.endpoints.refreshToken.initiate({ refreshToken }).unwrap()
-        );
+        // Update tokens in state using the action creator
+        const { setCredentials } = await import('../slices/authSlice');
+        const authData = refreshResult.data as any;
+        api.dispatch(setCredentials({
+          user: authData.user,
+          token: authData.token,
+          refreshToken: authData.refreshToken,
+          expiresIn: authData.expiresIn,
+        }));
         
         // Retry original query with new token
         result = await baseQuery(args, api, extraOptions);
       } else {
         // Refresh failed, logout user
-        api.dispatch({ type: 'auth/logout' });
+        const { clearCredentials } = await import('../slices/authSlice');
+        api.dispatch(clearCredentials());
       }
     } else {
       // No refresh token, logout user
-      api.dispatch({ type: 'auth/logout' });
+      const { clearCredentials } = await import('../slices/authSlice');
+      api.dispatch(clearCredentials());
     }
   }
 
@@ -118,6 +131,17 @@ export const api = createApi({
         method: 'POST',
         body: credentials,
       }),
+      transformResponse: (response: BackendAuthResponse): AuthResponse => {
+        const expiresAt = new Date(response.data.tokens.expiresAt);
+        const expiresIn = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
+        
+        return {
+          user: response.data.user,
+          token: response.data.tokens.accessToken,
+          refreshToken: '', // Not provided by current backend
+          expiresIn,
+        };
+      },
       invalidatesTags: ['User'],
     }),
 
@@ -127,6 +151,17 @@ export const api = createApi({
         method: 'POST',
         body: userData,
       }),
+      transformResponse: (response: BackendAuthResponse): AuthResponse => {
+        const expiresAt = response.data.tokens ? new Date(response.data.tokens.expiresAt) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const expiresIn = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
+        
+        return {
+          user: response.data.user,
+          token: response.data.tokens?.accessToken || '',
+          refreshToken: '', // Not provided by current backend  
+          expiresIn,
+        };
+      },
     }),
 
     refreshToken: builder.mutation<AuthResponse, RefreshTokenRequest>({
@@ -143,6 +178,26 @@ export const api = createApi({
         method: 'POST',
       }),
       invalidatesTags: ['User', 'Transaction', 'Category', 'Budget', 'Account', 'Reports'],
+    }),
+
+    forgotPassword: builder.mutation<ForgotPasswordResponse, ForgotPasswordRequest>({
+      query: (data) => ({
+        url: '/auth/forgot-password',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+
+    resetPassword: builder.mutation<ResetPasswordResponse, ResetPasswordRequest>({
+      query: (data) => ({
+        url: '/auth/reset-password',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+
+    getSecurityMetrics: builder.query<SecurityMetricsResponse, string>({
+      query: (email) => `/auth/security?email=${encodeURIComponent(email)}`,
     }),
 
     // User endpoints
@@ -419,6 +474,9 @@ export const {
   useRegisterMutation,
   useRefreshTokenMutation,
   useLogoutMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+  useGetSecurityMetricsQuery,
   
   // User hooks
   useGetProfileQuery,

@@ -55,7 +55,7 @@ export class AuthController {
   }
 
   /**
-   * Login user
+   * Login user with enhanced security
    */
   static async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -64,8 +64,8 @@ export class AuthController {
         password: req.body.password
       };
 
-      // Authenticate user
-      const { user, tokens } = await UserService.authenticateUser(loginData);
+      // Authenticate user with security tracking
+      const { user, tokens } = await UserService.authenticateUser(loginData, req);
 
       // Set refresh token as HTTP-only cookie
       res.cookie('refreshToken', tokens.refreshToken, {
@@ -75,7 +75,22 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
-      logger.info('User logged in successfully', { userId: user.id, email: user.email });
+      // Get remaining attempts info for response (optional security info)
+      let securityInfo: any = {};
+      try {
+        const securityMetrics = await UserService.getUserSecurityMetrics(user.email);
+        securityInfo = {
+          remainingLoginAttempts: securityMetrics.loginMetrics.remainingAttempts
+        };
+      } catch {
+        // Don't fail login if security metrics can't be retrieved
+      }
+
+      logger.info('User logged in successfully', { 
+        userId: user.id, 
+        email: user.email,
+        ipAddress: req.ip
+      });
 
       res.status(200).json(formatResponse({
         user: {
@@ -89,11 +104,30 @@ export class AuthController {
         tokens: {
           accessToken: tokens.accessToken,
           expiresAt: tokens.accessTokenExpiry
-        }
+        },
+        security: securityInfo
       }, 'Login successful'));
     } catch (error) {
-      logger.error('Login failed', { error: error.message, email: req.body.email });
-      next(error);
+      logger.error('Login failed', { 
+        error: error.message, 
+        email: req.body.email,
+        ipAddress: req.ip 
+      });
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Login failed';
+      if (error.message.includes('locked') || error.message.includes('Try again in')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('suspended')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('Invalid credentials')) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.message.includes('inactive')) {
+        errorMessage = 'Account is not active';
+      }
+      
+      const customError = new Error(errorMessage);
+      next(customError);
     }
   }
 
@@ -273,7 +307,7 @@ export class AuthController {
   }
 
   /**
-   * Request password reset
+   * Request password reset with enhanced security tracking
    */
   static async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -283,29 +317,52 @@ export class AuthController {
         return next(new Error('Email is required'));
       }
 
-      // Find user by email
+      // Use UserService for enhanced security tracking
+      await UserService.requestPasswordReset(email, req);
+
+      // Find user by email (for sending email if exists)
       const user = await UserService.findUserByEmail(email);
       
-      // Always return success to prevent email enumeration
-      if (!user) {
-        logger.warn('Password reset requested for non-existent email', { email });
-        return res.status(200).json(formatResponse(null, 'If an account with that email exists, a password reset link has been sent'));
+      // Send password reset email if user exists
+      if (user) {
+        try {
+          await EmailService.sendPasswordResetEmail(user.email, user.first_name, user.id);
+          logger.info('Password reset email sent', { 
+            userId: user.id, 
+            email: user.email,
+            ipAddress: req.ip 
+          });
+        } catch (emailError) {
+          logger.error('Failed to send password reset email', {
+            error: emailError.message,
+            userId: user.id,
+            email: user.email,
+            ipAddress: req.ip
+          });
+          // Don't reveal email sending failure to user
+        }
       }
 
-      // Send password reset email
-      await EmailService.sendPasswordResetEmail(user.email, user.first_name, user.id);
-
-      logger.info('Password reset email sent', { userId: user.id, email: user.email });
-
+      // Always return success message to prevent email enumeration
       res.status(200).json(formatResponse(null, 'If an account with that email exists, a password reset link has been sent'));
     } catch (error) {
-      logger.error('Password reset request failed', { error: error.message, email: req.body.email });
+      logger.error('Password reset request failed', { 
+        error: error.message, 
+        email: req.body.email,
+        ipAddress: req.ip 
+      });
+
+      // Handle rate limiting errors specifically
+      if (error.message.includes('Try again in')) {
+        return res.status(429).json(formatResponse(null, error.message, false));
+      }
+
       next(error);
     }
   }
 
   /**
-   * Reset password using token
+   * Reset password using token with enhanced security tracking
    */
   static async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -321,18 +378,53 @@ export class AuthController {
       // Reset password
       await UserService.resetPassword(userId, password);
 
+      // Record successful password reset
+      const securityInfo = UserService.extractSecurityInfo ? 
+        UserService.extractSecurityInfo(req) : 
+        { ipAddress: req.ip || 'unknown', userAgent: req.get('User-Agent') };
+
       // Send confirmation email
       const user = await UserService.findUserById(userId);
       if (user) {
-        await EmailService.sendPasswordChangeConfirmation(user.email, user.first_name);
+        try {
+          await EmailService.sendPasswordChangeConfirmation(user.email, user.first_name);
+        } catch (emailError) {
+          logger.error('Failed to send password change confirmation', {
+            error: emailError.message,
+            userId,
+            email,
+            ipAddress: req.ip
+          });
+          // Don't fail the password reset if email fails
+        }
       }
 
-      logger.info('Password reset successfully', { userId, email });
+      logger.info('Password reset successfully', { 
+        userId, 
+        email,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
 
-      res.status(200).json(formatResponse(null, 'Password reset successfully'));
+      res.status(200).json(formatResponse(null, 'Password reset successfully. You can now log in with your new password.'));
     } catch (error) {
-      logger.error('Password reset failed', { error: error.message });
-      next(error);
+      logger.error('Password reset failed', { 
+        error: error.message,
+        ipAddress: req.ip
+      });
+
+      // Provide specific error messages for token issues
+      let errorMessage = 'Password reset failed';
+      if (error.message.includes('Invalid or expired')) {
+        errorMessage = 'Password reset link is invalid or has expired. Please request a new one.';
+      } else if (error.message.includes('Token')) {
+        errorMessage = 'Invalid password reset token';
+      } else if (error.message.includes('Password')) {
+        errorMessage = error.message; // Keep password validation messages
+      }
+
+      const customError = new Error(errorMessage);
+      next(customError);
     }
   }
 
@@ -441,6 +533,52 @@ export class AuthController {
       }));
     } catch (error) {
       logger.error('Failed to get session info', { error: error.message, userId: req.user?.userId });
+      next(error);
+    }
+  }
+
+  /**
+   * Get user security information (authenticated users only)
+   */
+  static async getSecurityInfo(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        return next(new Error('User not authenticated'));
+      }
+
+      const user = await UserService.findUserById(req.user.userId);
+      if (!user) {
+        return next(new Error('User not found'));
+      }
+
+      // Get security metrics for the user
+      const securityMetrics = await UserService.getUserSecurityMetrics(user.email);
+
+      res.status(200).json(formatResponse({
+        userId: req.user.userId,
+        email: req.user.email,
+        security: {
+          loginAttempts: {
+            failed: securityMetrics.loginMetrics.failedAttempts,
+            remaining: securityMetrics.loginMetrics.remainingAttempts,
+            locked: securityMetrics.loginMetrics.accountLocked,
+            lockoutExpiry: securityMetrics.loginMetrics.lockoutExpiry
+          },
+          passwordResetAttempts: {
+            failed: securityMetrics.passwordResetMetrics.failedAttempts,
+            remaining: securityMetrics.passwordResetMetrics.remainingAttempts,
+            locked: securityMetrics.passwordResetMetrics.accountLocked,
+            lockoutExpiry: securityMetrics.passwordResetMetrics.lockoutExpiry
+          },
+          recentActivity: {
+            totalAttempts: securityMetrics.recentAttempts.length,
+            lastActivity: securityMetrics.recentAttempts[0]?.attemptedAt || null,
+            uniqueIPs: [...new Set(securityMetrics.recentAttempts.map(a => a.ipAddress))].length
+          }
+        }
+      }));
+    } catch (error) {
+      logger.error('Failed to get security info', { error: error.message, userId: req.user?.userId });
       next(error);
     }
   }

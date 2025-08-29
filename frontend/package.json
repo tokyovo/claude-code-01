@@ -19,9 +19,22 @@
     "test:ci": "jest --coverage --watchAll=false --passWithNoTests",
     "test:ui": "jest --testPathPattern=src/components",
     "test:integration": "jest --testPathPattern=src/__tests__/integration",
-    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand"
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:auth": "playwright test e2e/auth/",
+    "test:e2e:security": "playwright test e2e/auth/auth-security.spec.ts",
+    "test:e2e:cross-browser": "playwright test e2e/cross-browser/",
+    "test:e2e:accessibility": "playwright test e2e/accessibility/",
+    "test:e2e:performance": "playwright test e2e/performance/",
+    "test:e2e:visual": "playwright test e2e/visual/",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:update-snapshots": "playwright test --update-snapshots"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.1",
     "@reduxjs/toolkit": "^2.8.2",
     "@types/node": "^24.3.0",
     "class-variance-authority": "^0.7.1",
@@ -29,12 +42,15 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-error-boundary": "^6.0.0",
+    "react-hook-form": "^7.62.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.8.2",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/typography": "^0.5.16",

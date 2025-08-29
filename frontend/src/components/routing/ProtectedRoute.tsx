@@ -1,8 +1,8 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/redux';
-import { ROUTES } from '@/constants';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useAuth, useActivityTracking } from '../../hooks/auth';
+import { ROUTES } from '../../constants';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -29,6 +29,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
+  
+  // Enable activity tracking for authenticated users
+  useActivityTracking();
 
   // Show loading spinner while authentication is being verified
   if (isLoading) {

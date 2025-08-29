@@ -63,6 +63,11 @@ describe('JwtService', () => {
       expect(refreshPayload.userId).toBe(testUserId);
       expect(refreshPayload.email).toBe(testEmail);
       expect(refreshPayload.type).toBe('refresh');
+
+      // Verify token expiry times
+      expect(result.accessTokenExpiry.getTime()).toBeGreaterThan(Date.now());
+      expect(result.refreshTokenExpiry.getTime()).toBeGreaterThan(Date.now());
+      expect(result.refreshTokenExpiry.getTime()).toBeGreaterThan(result.accessTokenExpiry.getTime());
     });
 
     it('should store tokens in Redis', async () => {
@@ -87,6 +92,26 @@ describe('JwtService', () => {
       await expect(
         JwtService.generateTokenPair(testUserId, testEmail)
       ).rejects.toThrow('Token generation failed');
+    });
+
+    it('should generate unique tokens for concurrent requests', async () => {
+      const [result1, result2] = await Promise.all([
+        JwtService.generateTokenPair(testUserId, testEmail),
+        JwtService.generateTokenPair(testUserId, testEmail)
+      ]);
+
+      expect(result1.accessToken).not.toBe(result2.accessToken);
+      expect(result1.refreshToken).not.toBe(result2.refreshToken);
+    });
+
+    it('should handle invalid user data', async () => {
+      await expect(
+        JwtService.generateTokenPair('', testEmail)
+      ).rejects.toThrow();
+
+      await expect(
+        JwtService.generateTokenPair(testUserId, '')
+      ).rejects.toThrow();
     });
   });
 
@@ -337,6 +362,223 @@ describe('JwtService', () => {
       expect(() => {
         JwtService.verifyEmailVerificationToken(expiredToken);
       }).toThrow('Invalid or expired email verification token');
+    });
+  });
+
+  describe('getUserSessionsCount', () => {
+    it('should return session count for user', async () => {
+      mockRedis.scard.mockResolvedValue(3);
+
+      const count = await JwtService.getUserSessionsCount(testUserId);
+
+      expect(count).toBe(3);
+      expect(mockRedis.scard).toHaveBeenCalledWith(`user_sessions:${testUserId}`);
+    });
+
+    it('should return 0 for user with no sessions', async () => {
+      mockRedis.scard.mockResolvedValue(0);
+
+      const count = await JwtService.getUserSessionsCount(testUserId);
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle Redis errors gracefully', async () => {
+      mockRedis.scard.mockRejectedValue(new Error('Redis error'));
+
+      const count = await JwtService.getUserSessionsCount(testUserId);
+
+      expect(count).toBe(0);
+    });
+  });
+
+  describe('Security Tests', () => {
+    it('should not accept tokens with tampered payload', async () => {
+      const { accessToken } = await JwtService.generateTokenPair(testUserId, testEmail);
+      
+      // Tamper with the token by changing the payload (this will invalidate the signature)
+      const [header, payload, signature] = accessToken.split('.');
+      const decodedPayload = JSON.parse(Buffer.from(payload, 'base64url').toString());
+      decodedPayload.userId = 'hacker-id';
+      const tamperedPayload = Buffer.from(JSON.stringify(decodedPayload)).toString('base64url');
+      const tamperedToken = `${header}.${tamperedPayload}.${signature}`;
+
+      mockRedis.get.mockResolvedValue(null);
+
+      await expect(
+        JwtService.verifyAccessToken(tamperedToken)
+      ).rejects.toThrow();
+    });
+
+    it('should not accept tokens with wrong signature', async () => {
+      const { accessToken } = await JwtService.generateTokenPair(testUserId, testEmail);
+      
+      // Change the signature
+      const [header, payload] = accessToken.split('.');
+      const wrongSignature = 'wrong-signature';
+      const tamperedToken = `${header}.${payload}.${wrongSignature}`;
+
+      mockRedis.get.mockResolvedValue(null);
+
+      await expect(
+        JwtService.verifyAccessToken(tamperedToken)
+      ).rejects.toThrow();
+    });
+
+    it('should handle malformed tokens gracefully', async () => {
+      const malformedTokens = [
+        'not.a.token',
+        'not-a-jwt',
+        '',
+        'a.b',
+        'a.b.c.d.e'
+      ];
+
+      mockRedis.get.mockResolvedValue(null);
+
+      for (const token of malformedTokens) {
+        await expect(
+          JwtService.verifyAccessToken(token)
+        ).rejects.toThrow();
+      }
+    });
+
+    it('should reject tokens signed with different secret', async () => {
+      const tokenWithWrongSecret = jwt.sign(
+        { userId: testUserId, email: testEmail, type: 'access' },
+        'wrong-secret',
+        { expiresIn: '15m' }
+      );
+
+      mockRedis.get.mockResolvedValue(null);
+
+      await expect(
+        JwtService.verifyAccessToken(tokenWithWrongSecret)
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('Performance Tests', () => {
+    it('should handle token generation under load', async () => {
+      const concurrentRequests = 50;
+      const promises = Array(concurrentRequests).fill(null).map(() =>
+        JwtService.generateTokenPair(testUserId, testEmail)
+      );
+
+      const results = await Promise.all(promises);
+
+      // All tokens should be unique
+      const tokens = results.map(r => r.accessToken);
+      const uniqueTokens = new Set(tokens);
+      expect(uniqueTokens.size).toBe(concurrentRequests);
+    });
+
+    it('should handle token verification under load', async () => {
+      const { accessToken } = await JwtService.generateTokenPair(testUserId, testEmail);
+      mockRedis.get.mockResolvedValue(null);
+
+      const concurrentRequests = 100;
+      const promises = Array(concurrentRequests).fill(null).map(() =>
+        JwtService.verifyAccessToken(accessToken)
+      );
+
+      const results = await Promise.all(promises);
+
+      // All verifications should succeed with same payload
+      results.forEach(result => {
+        expect(result.userId).toBe(testUserId);
+        expect(result.email).toBe(testEmail);
+      });
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle Redis connection failures during token generation', async () => {
+      mockRedis.setex.mockRejectedValue(new Error('Connection refused'));
+
+      await expect(
+        JwtService.generateTokenPair(testUserId, testEmail)
+      ).rejects.toThrow('Token generation failed');
+    });
+
+    it('should handle Redis timeout during verification', async () => {
+      const { accessToken } = await JwtService.generateTokenPair(testUserId, testEmail);
+      mockRedis.get.mockRejectedValue(new Error('Timeout'));
+
+      // Should default to allowing the token if Redis is down (fail open)
+      const result = await JwtService.verifyAccessToken(accessToken);
+      expect(result.userId).toBe(testUserId);
+    });
+
+    it('should handle token expiry edge cases', async () => {
+      // Create a token that expires in 1 millisecond
+      const shortLivedToken = jwt.sign(
+        { userId: testUserId, email: testEmail, type: 'access' },
+        process.env.JWT_SECRET || 'test-secret',
+        { expiresIn: '1ms' }
+      );
+
+      // Wait for token to expire
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      mockRedis.get.mockResolvedValue(null);
+
+      await expect(
+        JwtService.verifyAccessToken(shortLivedToken)
+      ).rejects.toThrow('jwt expired');
+    });
+
+    it('should handle user sessions cleanup when Redis fails', async () => {
+      mockRedis.get.mockResolvedValue('token');
+      mockRedis.smembers.mockRejectedValue(new Error('Redis error'));
+      mockRedis.del.mockRejectedValue(new Error('Redis error'));
+
+      // Should not throw error even if cleanup fails
+      await expect(
+        JwtService.revokeAllUserSessions(testUserId)
+      ).resolves.not.toThrow();
+    });
+
+    it('should handle blacklist operation when Redis fails', async () => {
+      const { accessToken } = await JwtService.generateTokenPair(testUserId, testEmail);
+      mockRedis.setex.mockRejectedValue(new Error('Redis error'));
+
+      // Should throw error if blacklisting fails (this is critical for security)
+      await expect(
+        JwtService.blacklistToken(accessToken)
+      ).rejects.toThrow('Failed to blacklist token');
+    });
+  });
+
+  describe('Token Lifecycle', () => {
+    it('should handle complete token lifecycle', async () => {
+      // Generate tokens
+      const tokens = await JwtService.generateTokenPair(testUserId, testEmail);
+      
+      // Verify tokens work
+      mockRedis.get.mockResolvedValue(null);
+      const accessPayload = await JwtService.verifyAccessToken(tokens.accessToken);
+      expect(accessPayload.userId).toBe(testUserId);
+
+      // Refresh access token
+      mockRedis.get.mockImplementation((key) => {
+        if (key === `blacklist:${tokens.refreshToken}`) return Promise.resolve(null);
+        if (key === `refresh_token:${testUserId}`) return Promise.resolve(tokens.refreshToken);
+        return Promise.resolve(null);
+      });
+
+      const newTokens = await JwtService.refreshAccessToken(tokens.refreshToken);
+      expect(newTokens.accessToken).toBeDefined();
+
+      // Blacklist tokens
+      await JwtService.blacklistToken(tokens.accessToken);
+      await JwtService.blacklistToken(newTokens.accessToken);
+
+      // Verify blacklisted tokens are rejected
+      mockRedis.get.mockResolvedValue('1');
+      await expect(
+        JwtService.verifyAccessToken(tokens.accessToken)
+      ).rejects.toThrow('Token is blacklisted');
     });
   });
 });

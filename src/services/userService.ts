@@ -1,47 +1,26 @@
 import bcrypt from 'bcrypt';
+import { Request } from 'express';
 import { Knex } from 'knex';
 import { db } from '../config/database';
 import { config } from '../config/env';
 import { logger } from '../middleware/logging';
 import { JwtService } from './jwtService';
+import { SecurityService } from './securityService';
+import { 
+  User, 
+  UserSafe, 
+  CreateUserData, 
+  UpdateUserData, 
+  UserLoginData, 
+  UserAuthResult,
+  UserModel,
+  UserStatus,
+  USER_CONSTANTS,
+  DEFAULT_USER_PREFERENCES
+} from '../models/User';
 
-export interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  status: 'active' | 'inactive' | 'suspended';
-  email_verified: boolean;
-  last_login: Date | null;
-  created_at: Date;
-  updated_at: Date;
-  phone?: string;
-  avatar_url?: string;
-  preferences?: any;
-}
-
-export interface CreateUserData {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  phone?: string;
-}
-
-export interface UpdateUserData {
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  avatar_url?: string;
-  preferences?: any;
-}
-
-export interface UserLoginData {
-  email: string;
-  password: string;
-}
-
-export interface UserWithoutPassword extends Omit<User, 'password_hash'> {}
+// Type aliases for backwards compatibility
+export type { User, UserSafe as UserWithoutPassword, CreateUserData, UpdateUserData, UserLoginData };
 
 export class UserService {
   private static readonly MAX_LOGIN_ATTEMPTS = 5;
@@ -50,55 +29,101 @@ export class UserService {
   /**
    * Create a new user
    */
-  static async createUser(userData: CreateUserData): Promise<UserWithoutPassword> {
+  static async createUser(userData: CreateUserData): Promise<UserSafe> {
     const trx = await db.transaction();
     
     try {
+      // Validate input data using the User model
+      const validatedData = UserModel.validateCreateData(userData);
+      
       // Check if user already exists
-      const existingUser = await this.findUserByEmail(userData.email);
+      const existingUser = await this.findUserByEmail(validatedData.email);
       if (existingUser) {
         throw new Error('User with this email already exists');
       }
 
-      // Validate password strength
-      this.validatePassword(userData.password);
-
       // Hash password
-      const hashedPassword = await this.hashPassword(userData.password);
+      const hashedPassword = await this.hashPassword(validatedData.password);
+
+      // Prepare user data with defaults
+      const userToCreate = {
+        email: validatedData.email,
+        password_hash: hashedPassword,
+        first_name: validatedData.first_name,
+        last_name: validatedData.last_name,
+        phone: validatedData.phone || null,
+        status: UserStatus.ACTIVE,
+        email_verified: false,
+        preferences: DEFAULT_USER_PREFERENCES
+      };
 
       // Create user
       const [user] = await trx('users')
-        .insert({
-          email: userData.email.toLowerCase().trim(),
-          password_hash: hashedPassword,
-          first_name: userData.first_name.trim(),
-          last_name: userData.last_name.trim(),
-          phone: userData.phone?.trim() || null,
-          status: 'active',
-          email_verified: false
-        })
-        .returning(['id', 'email', 'first_name', 'last_name', 'status', 'email_verified', 'created_at', 'updated_at', 'phone']);
+        .insert(userToCreate)
+        .returning([
+          'id', 'email', 'first_name', 'last_name', 'status', 
+          'email_verified', 'created_at', 'updated_at', 'phone', 
+          'avatar_url', 'preferences', 'last_login'
+        ]);
 
       await trx.commit();
 
-      logger.info('User created successfully', { userId: user.id, email: user.email });
+      logger.info('User created successfully', { 
+        userId: user.id, 
+        email: user.email,
+        hasPhone: !!user.phone 
+      });
+      
       return user;
     } catch (error) {
       await trx.rollback();
-      logger.error('Failed to create user', { error, email: userData.email });
+      logger.error('Failed to create user', { 
+        error: error instanceof Error ? error.message : String(error), 
+        email: userData.email 
+      });
       throw error;
     }
   }
 
   /**
-   * Authenticate user login
+   * Authenticate user login with enhanced security
    */
-  static async authenticateUser(loginData: UserLoginData): Promise<{ user: UserWithoutPassword; tokens: any }> {
+  static async authenticateUser(loginData: UserLoginData, req?: Request): Promise<UserAuthResult> {
+    const email = loginData.email.toLowerCase().trim();
+    let securityInfo: any = {};
+    
+    if (req) {
+      securityInfo = SecurityService.extractSecurityInfo(req);
+    }
+
     try {
-      const email = loginData.email.toLowerCase().trim();
+      // Validate login data
+      const validatedData = UserModel.validateLoginData(loginData);
       
       // Check for account lockout
-      await this.checkAccountLockout(email);
+      const securityMetrics = await SecurityService.checkAccountLockout(email, 'login');
+      
+      if (securityMetrics.accountLocked) {
+        const minutesRemaining = Math.ceil((securityMetrics.lockoutExpiry!.getTime() - Date.now()) / (1000 * 60));
+        
+        // Record the failed attempt due to lockout
+        if (req) {
+          await SecurityService.recordLoginAttempt({
+            email,
+            ipAddress: securityInfo.ipAddress || 'unknown',
+            userAgent: securityInfo.userAgent,
+            successful: false,
+            attemptType: 'login',
+            additionalInfo: {
+              ...securityInfo.additionalInfo,
+              reason: 'account_locked',
+              lockoutExpiry: securityMetrics.lockoutExpiry?.toISOString()
+            }
+          });
+        }
+
+        throw new Error(`Account temporarily locked due to too many failed attempts. Try again in ${minutesRemaining} minute(s).`);
+      }
 
       // Find user with password hash
       const userWithPassword = await db('users')
@@ -106,24 +131,84 @@ export class UserService {
         .first();
 
       if (!userWithPassword) {
-        await this.recordFailedLogin(email);
+        // Record failed attempt for non-existent user
+        if (req) {
+          await SecurityService.recordLoginAttempt({
+            email,
+            ipAddress: securityInfo.ipAddress || 'unknown',
+            userAgent: securityInfo.userAgent,
+            successful: false,
+            attemptType: 'login',
+            additionalInfo: {
+              ...securityInfo.additionalInfo,
+              reason: 'user_not_found'
+            }
+          });
+        }
         throw new Error('Invalid credentials');
       }
 
       // Check if account is active
-      if (userWithPassword.status !== 'active') {
-        throw new Error('Account is inactive or suspended');
+      if (userWithPassword.status !== UserStatus.ACTIVE) {
+        // Record failed attempt due to inactive account
+        if (req) {
+          await SecurityService.recordLoginAttempt({
+            email,
+            userId: userWithPassword.id,
+            ipAddress: securityInfo.ipAddress || 'unknown',
+            userAgent: securityInfo.userAgent,
+            successful: false,
+            attemptType: 'login',
+            additionalInfo: {
+              ...securityInfo.additionalInfo,
+              reason: 'account_inactive',
+              status: userWithPassword.status
+            }
+          });
+        }
+
+        if (userWithPassword.status === UserStatus.SUSPENDED) {
+          throw new Error('Account has been suspended. Please contact support.');
+        }
+        throw new Error('Account is inactive');
       }
 
       // Verify password
-      const isValidPassword = await this.verifyPassword(loginData.password, userWithPassword.password_hash);
+      const isValidPassword = await this.verifyPassword(validatedData.password, userWithPassword.password_hash);
       if (!isValidPassword) {
-        await this.recordFailedLogin(email);
+        // Record failed attempt due to wrong password
+        if (req) {
+          await SecurityService.recordLoginAttempt({
+            email,
+            userId: userWithPassword.id,
+            ipAddress: securityInfo.ipAddress || 'unknown',
+            userAgent: securityInfo.userAgent,
+            successful: false,
+            attemptType: 'login',
+            additionalInfo: {
+              ...securityInfo.additionalInfo,
+              reason: 'invalid_password'
+            }
+          });
+        }
         throw new Error('Invalid credentials');
       }
 
-      // Reset failed login attempts
-      await this.resetFailedLoginAttempts(email);
+      // Successful login - record it
+      if (req) {
+        await SecurityService.recordLoginAttempt({
+          email,
+          userId: userWithPassword.id,
+          ipAddress: securityInfo.ipAddress || 'unknown',
+          userAgent: securityInfo.userAgent,
+          successful: true,
+          attemptType: 'login',
+          additionalInfo: securityInfo.additionalInfo
+        });
+      }
+
+      // Reset failed login attempts (implicit - handled by SecurityService time window)
+      await SecurityService.resetFailedAttempts(email, 'login');
 
       // Update last login
       await this.updateLastLogin(userWithPassword.id);
@@ -134,11 +219,20 @@ export class UserService {
       // Remove password hash from user object
       const { password_hash, ...user } = userWithPassword;
 
-      logger.info('User authenticated successfully', { userId: user.id, email: user.email });
+      logger.info('User authenticated successfully', { 
+        userId: user.id, 
+        email: user.email,
+        ipAddress: req ? securityInfo.ipAddress : 'unknown',
+        remainingAttempts: securityMetrics.remainingAttempts
+      });
 
       return { user, tokens };
     } catch (error) {
-      logger.error('User authentication failed', { error: error.message, email: loginData.email });
+      logger.error('User authentication failed', { 
+        error: error instanceof Error ? error.message : String(error), 
+        email,
+        ipAddress: req ? securityInfo.ipAddress : 'unknown'
+      });
       throw error;
     }
   }
@@ -146,7 +240,7 @@ export class UserService {
   /**
    * Find user by ID
    */
-  static async findUserById(id: string): Promise<UserWithoutPassword | null> {
+  static async findUserById(id: string): Promise<UserSafe | null> {
     try {
       const user = await db('users')
         .select(['id', 'email', 'first_name', 'last_name', 'status', 'email_verified', 'last_login', 'created_at', 'updated_at', 'phone', 'avatar_url', 'preferences'])
@@ -163,7 +257,7 @@ export class UserService {
   /**
    * Find user by email
    */
-  static async findUserByEmail(email: string): Promise<UserWithoutPassword | null> {
+  static async findUserByEmail(email: string): Promise<UserSafe | null> {
     try {
       const user = await db('users')
         .select(['id', 'email', 'first_name', 'last_name', 'status', 'email_verified', 'last_login', 'created_at', 'updated_at', 'phone', 'avatar_url', 'preferences'])
@@ -180,7 +274,7 @@ export class UserService {
   /**
    * Update user profile
    */
-  static async updateUser(userId: string, updateData: UpdateUserData): Promise<UserWithoutPassword> {
+  static async updateUser(userId: string, updateData: UpdateUserData): Promise<UserSafe> {
     const trx = await db.transaction();
 
     try {
@@ -468,29 +562,90 @@ export class UserService {
   }
 
   /**
-   * Record failed login attempt
+   * Add password reset tracking with enhanced security
    */
-  private static async recordFailedLogin(email: string): Promise<void> {
-    // Implementation would depend on having a login_attempts table
-    // For now, we'll log the attempt
-    logger.warn('Failed login attempt recorded', { email });
+  static async requestPasswordReset(email: string, req?: Request): Promise<void> {
+    const normalizedEmail = email.toLowerCase().trim();
+    let securityInfo: any = {};
+    
+    if (req) {
+      securityInfo = SecurityService.extractSecurityInfo(req);
+    }
+
+    try {
+      // Check for password reset rate limiting
+      const securityMetrics = await SecurityService.checkAccountLockout(normalizedEmail, 'password_reset');
+      
+      if (securityMetrics.accountLocked) {
+        const minutesRemaining = Math.ceil((securityMetrics.lockoutExpiry!.getTime() - Date.now()) / (1000 * 60));
+        
+        // Record the failed attempt due to lockout
+        if (req) {
+          await SecurityService.recordLoginAttempt({
+            email: normalizedEmail,
+            ipAddress: securityInfo.ipAddress || 'unknown',
+            userAgent: securityInfo.userAgent,
+            successful: false,
+            attemptType: 'password_reset',
+            additionalInfo: {
+              ...securityInfo.additionalInfo,
+              reason: 'reset_rate_limited',
+              lockoutExpiry: securityMetrics.lockoutExpiry?.toISOString()
+            }
+          });
+        }
+        
+        throw new Error(`Too many password reset attempts. Try again in ${minutesRemaining} minute(s).`);
+      }
+
+      // Find user
+      const user = await this.findUserByEmail(normalizedEmail);
+      
+      // Record the password reset attempt
+      if (req) {
+        await SecurityService.recordLoginAttempt({
+          email: normalizedEmail,
+          userId: user?.id,
+          ipAddress: securityInfo.ipAddress || 'unknown',
+          userAgent: securityInfo.userAgent,
+          successful: !!user, // Successful if user exists
+          attemptType: 'password_reset',
+          additionalInfo: {
+            ...securityInfo.additionalInfo,
+            reason: user ? 'reset_requested' : 'user_not_found'
+          }
+        });
+      }
+
+      // Always log the request for security monitoring
+      logger.info('Password reset requested', { 
+        email: normalizedEmail,
+        userExists: !!user,
+        ipAddress: req ? securityInfo.ipAddress : 'unknown'
+      });
+
+    } catch (error) {
+      logger.error('Password reset request failed', {
+        error: error instanceof Error ? error.message : String(error),
+        email: normalizedEmail,
+        ipAddress: req ? securityInfo.ipAddress : 'unknown'
+      });
+      throw error;
+    }
   }
 
   /**
-   * Reset failed login attempts
+   * Get user security metrics
    */
-  private static async resetFailedLoginAttempts(email: string): Promise<void> {
-    // Implementation would depend on having a login_attempts table
-    // For now, we'll log the reset
-    logger.info('Failed login attempts reset', { email });
-  }
-
-  /**
-   * Check for account lockout
-   */
-  private static async checkAccountLockout(email: string): Promise<void> {
-    // Implementation would depend on having a login_attempts table
-    // For now, we'll just log the check
-    logger.debug('Account lockout check passed', { email });
+  static async getUserSecurityMetrics(email: string): Promise<any> {
+    try {
+      return await SecurityService.getSecurityMetrics(email.toLowerCase().trim());
+    } catch (error) {
+      logger.error('Failed to get user security metrics', {
+        error: error instanceof Error ? error.message : String(error),
+        email
+      });
+      throw new Error('Failed to retrieve security information');
+    }
   }
 }

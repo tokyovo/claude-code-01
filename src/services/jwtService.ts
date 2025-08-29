@@ -57,7 +57,15 @@ export class JwtService {
       } as jwt.SignOptions);
 
       // Store tokens in Redis for session management
-      await this.storeTokens(userId, accessToken, refreshToken, accessTokenExpiry, refreshTokenExpiry);
+      try {
+        await this.storeTokens(userId, accessToken, refreshToken, accessTokenExpiry, refreshTokenExpiry);
+      } catch (redisError) {
+        logger.warn('Failed to store tokens in Redis, but proceeding with authentication', { 
+          error: redisError instanceof Error ? redisError.message : String(redisError),
+          userId 
+        });
+        // Don't fail authentication if Redis fails
+      }
 
       logger.info('Token pair generated successfully', { userId, email });
 
@@ -68,7 +76,12 @@ export class JwtService {
         refreshTokenExpiry
       };
     } catch (error) {
-      logger.error('Failed to generate token pair', { error, userId, email });
+      logger.error('Failed to generate token pair', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId, 
+        email 
+      });
       throw new Error('Token generation failed');
     }
   }
@@ -155,10 +168,12 @@ export class JwtService {
       });
 
       // Update access token in Redis
-      await redisClient.setex(
+      const ttl = Math.floor(this.parseExpiry(config.JWT_EXPIRES_IN) / 1000);
+      await redisClient.set(
         `${this.ACCESS_TOKEN_PREFIX}${decoded.userId}`,
-        this.parseExpiry(config.JWT_EXPIRES_IN) / 1000,
-        accessToken
+        accessToken,
+        'EX',
+        ttl
       );
 
       logger.info('Access token refreshed successfully', { userId: decoded.userId });
@@ -185,7 +200,7 @@ export class JwtService {
 
       const ttl = decoded.exp - Math.floor(Date.now() / 1000);
       if (ttl > 0) {
-        await redisClient.setex(`${this.BLACKLIST_PREFIX}${token}`, ttl, '1');
+        await redisClient.set(`${this.BLACKLIST_PREFIX}${token}`, '1', 'EX', ttl);
         logger.info('Token blacklisted successfully', { userId: decoded.userId, tokenType: decoded.type });
       }
     } catch (error) {
@@ -280,17 +295,34 @@ export class JwtService {
       const accessTokenTtl = Math.floor((accessTokenExpiry.getTime() - Date.now()) / 1000);
       const refreshTokenTtl = Math.floor((refreshTokenExpiry.getTime() - Date.now()) / 1000);
 
-      await Promise.all([
-        // Store access token
-        redisClient.setex(`${this.ACCESS_TOKEN_PREFIX}${userId}`, accessTokenTtl, accessToken),
-        // Store refresh token
-        redisClient.setex(`${this.REFRESH_TOKEN_PREFIX}${userId}`, refreshTokenTtl, refreshToken),
-        // Add to user sessions set
-        redisClient.sadd(`${this.USER_SESSIONS_PREFIX}${userId}`, accessToken, refreshToken),
-        redisClient.expire(`${this.USER_SESSIONS_PREFIX}${userId}`, refreshTokenTtl)
-      ]);
+      logger.debug('Storing tokens in Redis', { 
+        userId, 
+        accessTokenTtl, 
+        refreshTokenTtl,
+        accessTokenLength: accessToken.length,
+        refreshTokenLength: refreshToken.length 
+      });
+
+      // Store tokens one by one to isolate the error
+      await redisClient.set(`${this.ACCESS_TOKEN_PREFIX}${userId}`, accessToken, 'EX', accessTokenTtl);
+      logger.debug('Access token stored successfully');
+      
+      await redisClient.set(`${this.REFRESH_TOKEN_PREFIX}${userId}`, refreshToken, 'EX', refreshTokenTtl);
+      logger.debug('Refresh token stored successfully');
+      
+      await redisClient.sadd(`${this.USER_SESSIONS_PREFIX}${userId}`, accessToken, refreshToken);
+      logger.debug('User sessions added successfully');
+      
+      await redisClient.expire(`${this.USER_SESSIONS_PREFIX}${userId}`, refreshTokenTtl);
+      logger.debug('Session expiration set successfully');
+      
     } catch (error) {
-      logger.error('Failed to store tokens in Redis', { error, userId });
+      logger.error('Failed to store tokens in Redis', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : 'unknown',
+        userId 
+      });
       throw error;
     }
   }

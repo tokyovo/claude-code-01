@@ -230,6 +230,16 @@ router.get('/session',
   AuthController.sessionInfo
 );
 
+/**
+ * @route   GET /api/v1/auth/security
+ * @desc    Get user security information and metrics
+ * @access  Private
+ */
+router.get('/security',
+  authenticate,
+  AuthController.getSecurityInfo
+);
+
 // Error handling middleware for auth routes
 router.use((error: any, req: any, res: any, next: any) => {
   // Log authentication errors

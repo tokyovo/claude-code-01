@@ -15,11 +15,33 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   password: string;
 }
 
+// Backend API response structure
+export interface BackendAuthResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: User;
+    tokens: {
+      accessToken: string;
+      expiresAt: string;
+    };
+  };
+  timestamp: string;
+  meta: {
+    apiVersion: string;
+    requestId: string;
+    processingTime: string;
+    serverTime: string;
+  };
+}
+
+// Frontend auth response (normalized)
 export interface AuthResponse {
   user: User;
   token: string;
@@ -29,6 +51,35 @@ export interface AuthResponse {
 
 export interface RefreshTokenRequest {
   refreshToken: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+  remainingAttempts?: number;
+  retryAfter?: number;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
+export interface SecurityMetricsResponse {
+  failedLoginAttempts: number;
+  remainingAttempts: number;
+  isAccountLocked: boolean;
+  lockoutExpiresAt?: string;
+  lastLoginAt?: string;
+  lastFailedLoginAt?: string;
 }
 
 // User API Types
