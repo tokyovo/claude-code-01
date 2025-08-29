@@ -45,11 +45,11 @@
 
 ### Stage 1A - Project Initialization
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-001**: Initialize Node.js/Express project with TypeScript configuration | backend-api-developer | 4h | None | Working Express server scaffold |
-| **FE-001**: Initialize React project with Vite and TypeScript | react-frontend-developer | 3h | None | React application scaffold |
-| **UX-001**: Setup design system and component library structure | ui-ux-designer | 3h | FE-001 | Design system foundation |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-001**: Initialize Node.js/Express project with TypeScript configuration | backend-api-developer | None | Working Express server scaffold |
+| **FE-001**: Initialize React project with Vite and TypeScript | react-frontend-developer | None | React application scaffold |
+| **UX-001**: Setup design system and component library structure | ui-ux-designer | FE-001 | Design system foundation |
 
 **Stage 1A Integration Checkpoint**: All projects initialized and ready for development
 
@@ -57,39 +57,39 @@
 
 ### Stage 1B - Core Infrastructure
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-002**: Setup PostgreSQL database with Docker configuration | backend-api-developer | 3h | BE-001 | Database container running |
-| **FE-002**: Setup Redux Toolkit with RTK Query for state management | react-frontend-developer | 4h | FE-001 | State management configured |
-| **BE-003**: Configure Redis caching layer | backend-api-developer | 3h | BE-002 | Redis integration complete |
-| **FE-003**: Configure Tailwind CSS and base component structure | react-frontend-developer | 3h | FE-002 | Styling system ready |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-002**: Setup PostgreSQL database with Docker configuration | backend-api-developer | BE-001 | Database container running |
+| **FE-002**: Setup Redux Toolkit with RTK Query for state management | react-frontend-developer | FE-001 | State management configured |
+| **BE-003**: Configure Redis caching layer | backend-api-developer | BE-002 | Redis integration complete |
+| **FE-003**: Configure Tailwind CSS and base component structure | react-frontend-developer | FE-002 | Styling system ready |
 
 **Critical Path**: BE-001 → BE-002 → BE-003 (Backend infrastructure foundation)
 
 ### Stage 1C - Development Environment Setup
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-004**: Setup database migrations with Knex.js | backend-api-developer | 4h | BE-002 | Migration system operational |
-| **FE-004**: Setup React Router with protected route architecture | react-frontend-developer | 3h | FE-003 | Routing system with guards |
-| **BE-005**: Implement Express middleware (CORS, security, logging) | backend-api-developer | 4h | BE-001 | Security middleware active |
-| **TS-001**: Setup testing framework and initial test structure | testing-specialist | 3h | BE-004, FE-004 | Test environment ready |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-004**: Setup database migrations with Knex.js | backend-api-developer | BE-002 | Migration system operational |
+| **FE-004**: Setup React Router with protected route architecture | react-frontend-developer | FE-003 | Routing system with guards |
+| **BE-005**: Implement Express middleware (CORS, security, logging) | backend-api-developer | BE-001 | Security middleware active |
+| **TS-001**: Setup testing framework and initial test structure | testing-specialist | BE-004, FE-004 | Test environment ready |
 
 ### Stage 1D - Authentication Infrastructure
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-006**: Implement JWT authentication infrastructure | backend-api-developer | 6h | BE-005 | JWT auth system complete |
-| **FE-005**: Create base layout components and navigation | react-frontend-developer | 5h | FE-004 | UI component foundation |
-| **UX-002**: Design authentication UI components and flows | ui-ux-designer | 3h | FE-005 | Auth UI designs complete |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-006**: Implement JWT authentication infrastructure | backend-api-developer | BE-005 | JWT auth system complete |
+| **FE-005**: Create base layout components and navigation | react-frontend-developer | FE-004 | UI component foundation |
+| **UX-002**: Design authentication UI components and flows | ui-ux-designer | FE-005 | Auth UI designs complete |
 
 ### Stage 1E - Phase 1 Integration & Testing
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **TS-002**: Write initial unit tests for backend infrastructure | testing-specialist | 3h | BE-006 | Backend tests passing |
-| **FE-006**: Implement authentication form components | react-frontend-developer | 3h | UX-002 | Login/register forms |
-| **INTEGRATION-001**: Phase 1 integration testing and issue resolution | All Agents | 4h | All Phase 1 tasks | Stable development environment |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **TS-002**: Write initial unit tests for backend infrastructure | testing-specialist | BE-006 | Backend tests passing |
+| **FE-006**: Implement authentication form components | react-frontend-developer | UX-002 | Login/register forms |
+| **INTEGRATION-001**: Phase 1 integration testing and issue resolution | All Agents | All Phase 1 tasks | Stable development environment |
 
 **Phase 1 Critical Dependencies Met**: 
 
@@ -104,47 +104,47 @@
 
 ### Stage 2A - User Management Backend
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-007**: Create User model and database migration | backend-api-developer | 3h | BE-004 | User schema implemented |
-| **BE-008**: Implement user registration endpoint with validation | backend-api-developer | 5h | BE-006, BE-007 | User registration API |
-| **FE-007**: Implement authentication state management in Redux | react-frontend-developer | 8h | FE-006 | Auth state handling |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-007**: Create User model and database migration | backend-api-developer | BE-004 | User schema implemented |
+| **BE-008**: Implement user registration endpoint with validation | backend-api-developer | BE-006, BE-007 | User registration API |
+| **FE-007**: Implement authentication state management in Redux | react-frontend-developer | FE-006 | Auth state handling |
 
 **Parallel Work**: Frontend auth state can be developed while backend registration API is built
 
 ### Stage 2B - Login and Validation
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-009**: Implement user login endpoint with JWT tokens | backend-api-developer | 4h | BE-008 | Login API functional |
-| **BE-010**: Create password reset functionality with email | backend-api-developer | 4h | BE-009 | Password reset system |
-| **FE-008**: Create form validation with React Hook Form | react-frontend-developer | 5h | FE-007 | Form validation system |
-| **TS-003**: Write comprehensive authentication tests | testing-specialist | 3h | BE-009 | Auth endpoint tests |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-009**: Implement user login endpoint with JWT tokens | backend-api-developer | BE-008 | Login API functional |
+| **BE-010**: Create password reset functionality with email | backend-api-developer | BE-009 | Password reset system |
+| **FE-008**: Create form validation with React Hook Form | react-frontend-developer | FE-007 | Form validation system |
+| **TS-003**: Write comprehensive authentication tests | testing-specialist | BE-009 | Auth endpoint tests |
 
 ### Stage 2C - Token Management and Security
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-011**: Implement JWT token refresh mechanism | backend-api-developer | 4h | BE-009 | Token refresh system |
-| **BE-012**: Create Categories model and CRUD operations | backend-api-developer | 3h | BE-007 | Categories system |
-| **FE-009**: Implement password reset flow UI | react-frontend-developer | 4h | FE-008, BE-010 | Password reset interface |
-| **FE-010**: Create user profile management page | react-frontend-developer | 4h | FE-009 | Profile management UI |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-011**: Implement JWT token refresh mechanism | backend-api-developer | BE-009 | Token refresh system |
+| **BE-012**: Create Categories model and CRUD operations | backend-api-developer | BE-007 | Categories system |
+| **FE-009**: Implement password reset flow UI | react-frontend-developer | FE-008, BE-010 | Password reset interface |
+| **FE-010**: Create user profile management page | react-frontend-developer | FE-009 | Profile management UI |
 
 ### Stage 2D - Email Verification and Testing
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-013**: Setup email verification system | backend-api-developer | 6h | BE-008 | Email verification active |
-| **TS-004**: Create integration tests for auth flows | testing-specialist | 4h | BE-011, FE-010 | Auth integration tests |
-| **UI-001**: Setup Playwright testing framework | playwright-ui-tester | 3h | FE-010 | E2E testing framework |
-| **UX-003**: Review and refine authentication UI/UX | ui-ux-designer | 2h | FE-010 | UI improvements documented |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-013**: Setup email verification system | backend-api-developer | BE-008 | Email verification active |
+| **TS-004**: Create integration tests for auth flows | testing-specialist | BE-011, FE-010 | Auth integration tests |
+| **UI-001**: Setup Playwright testing framework | playwright-ui-tester | FE-010 | E2E testing framework |
+| **UX-003**: Review and refine authentication UI/UX | ui-ux-designer | FE-010 | UI improvements documented |
 
 ### Stage 2E - Authentication System Integration
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **UI-002**: Create authentication flow E2E tests | playwright-ui-tester | 4h | UI-001 | Auth workflow tests |
-| **INTEGRATION-002**: Complete authentication system testing | All Agents | 4h | All Phase 2 tasks | Working auth system |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **UI-002**: Create authentication flow E2E tests | playwright-ui-tester | UI-001 | Auth workflow tests |
+| **INTEGRATION-002**: Complete authentication system testing | All Agents | All Phase 2 tasks | Working auth system |
 
 **Phase 2 Integration Checkpoint**: ✅ Complete user authentication system operational
 
@@ -154,43 +154,43 @@
 
 ### Stage 3A - Transaction Model and API
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-014**: Create Transactions model with category relationships | backend-api-developer | 4h | BE-012 | Transaction schema |
-| **BE-015**: Implement transaction CRUD endpoints | backend-api-developer | 6h | BE-014 | Transaction API complete |
-| **FE-011**: Create transaction entry form with validation | react-frontend-developer | 8h | FE-010 | Transaction input UI |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-014**: Create Transactions model with category relationships | backend-api-developer | BE-012 | Transaction schema |
+| **BE-015**: Implement transaction CRUD endpoints | backend-api-developer | BE-014 | Transaction API complete |
+| **FE-011**: Create transaction entry form with validation | react-frontend-developer | FE-010 | Transaction input UI |
 
 ### Stage 3B - Transaction Features
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-016**: Add transaction filtering and search capabilities | backend-api-developer | 5h | BE-015 | Search/filter APIs |
-| **BE-017**: Implement file upload for receipts | backend-api-developer | 6h | BE-015 | Receipt upload system |
-| **FE-012**: Implement transaction list with pagination | react-frontend-developer | 6h | FE-011 | Transaction display UI |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-016**: Add transaction filtering and search capabilities | backend-api-developer | BE-015 | Search/filter APIs |
+| **BE-017**: Implement file upload for receipts | backend-api-developer | BE-015 | Receipt upload system |
+| **FE-012**: Implement transaction list with pagination | react-frontend-developer | FE-011 | Transaction display UI |
 
 ### Stage 3C - Transaction Validation and Search
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-018**: Create transaction validation and sanitization | backend-api-developer | 4h | BE-015 | Data validation layer |
-| **BE-019**: Add transaction categorization logic | backend-api-developer | 3h | BE-018 | Auto-categorization |
-| **FE-013**: Add transaction filtering and search UI | react-frontend-developer | 5h | FE-012, BE-016 | Search interface |
-| **FE-014**: Create receipt upload component | react-frontend-developer | 5h | FE-011, BE-017 | File upload UI |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-018**: Create transaction validation and sanitization | backend-api-developer | BE-015 | Data validation layer |
+| **BE-019**: Add transaction categorization logic | backend-api-developer | BE-018 | Auto-categorization |
+| **FE-013**: Add transaction filtering and search UI | react-frontend-developer | FE-012, BE-016 | Search interface |
+| **FE-014**: Create receipt upload component | react-frontend-developer | FE-011, BE-017 | File upload UI |
 
 ### Stage 3D - Transaction Management Completion
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **FE-015**: Implement transaction editing/deletion | react-frontend-developer | 4h | FE-012 | CRUD operations UI |
-| **TS-005**: Write comprehensive transaction tests | testing-specialist | 4h | BE-019, FE-015 | Transaction test suite |
-| **UX-004**: Design transaction management UI improvements | ui-ux-designer | 8h | FE-015 | Transaction UI enhancements |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **FE-015**: Implement transaction editing/deletion | react-frontend-developer | FE-012 | CRUD operations UI |
+| **TS-005**: Write comprehensive transaction tests | testing-specialist | BE-019, FE-015 | Transaction test suite |
+| **UX-004**: Design transaction management UI improvements | ui-ux-designer | FE-015 | Transaction UI enhancements |
 
 ### Stage 3E - Transaction System Integration
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **UI-003**: Create transaction workflow E2E tests | playwright-ui-tester | 4h | FE-015 | Transaction E2E tests |
-| **INTEGRATION-003**: Transaction system integration testing | All Agents | 4h | All Phase 3 tasks | Complete transaction system |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **UI-003**: Create transaction workflow E2E tests | playwright-ui-tester | FE-015 | Transaction E2E tests |
+| **INTEGRATION-003**: Transaction system integration testing | All Agents | All Phase 3 tasks | Complete transaction system |
 
 **Phase 3 Critical Milestone**: ✅ Full transaction CRUD functionality operational
 
@@ -200,42 +200,42 @@
 
 ### Stage 4A - Budget Model and Infrastructure
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-020**: Create Budget model and relationships | backend-api-developer | 4h | BE-014 | Budget schema |
-| **BE-021**: Implement budget CRUD endpoints | backend-api-developer | 5h | BE-020 | Budget API |
-| **FE-016**: Create budget creation/editing forms | react-frontend-developer | 8h | FE-015 | Budget input interface |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-020**: Create Budget model and relationships | backend-api-developer | BE-014 | Budget schema |
+| **BE-021**: Implement budget CRUD endpoints | backend-api-developer | BE-020 | Budget API |
+| **FE-016**: Create budget creation/editing forms | react-frontend-developer | FE-015 | Budget input interface |
 
 ### Stage 4B - Budget Calculation Engine
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-022**: Create budget calculation engine | backend-api-developer | 8h | BE-021 | Budget calculations |
-| **FE-017**: Implement budget overview dashboard | react-frontend-developer | 8h | FE-016 | Budget dashboard |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-022**: Create budget calculation engine | backend-api-developer | BE-021 | Budget calculations |
+| **FE-017**: Implement budget overview dashboard | react-frontend-developer | FE-016 | Budget dashboard |
 
 ### Stage 4C - Budget Features and Alerts
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-023**: Implement budget alerts and notifications | backend-api-developer | 6h | BE-022 | Alert system |
-| **BE-024**: Add budget rollover functionality | backend-api-developer | 5h | BE-022 | Budget rollover |
-| **FE-018**: Add budget progress visualizations | react-frontend-developer | 6h | FE-017 | Progress charts |
-| **FE-019**: Create budget alerts and notifications UI | react-frontend-developer | 4h | FE-017, BE-023 | Alert notifications |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-023**: Implement budget alerts and notifications | backend-api-developer | BE-022 | Alert system |
+| **BE-024**: Add budget rollover functionality | backend-api-developer | BE-022 | Budget rollover |
+| **FE-018**: Add budget progress visualizations | react-frontend-developer | FE-017 | Progress charts |
+| **FE-019**: Create budget alerts and notifications UI | react-frontend-developer | FE-017, BE-023 | Alert notifications |
 
 ### Stage 4D - Budget Analytics
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-025**: Create budget analytics endpoints | backend-api-developer | 4h | BE-022 | Budget analytics API |
-| **FE-020**: Implement budget vs actual comparison | react-frontend-developer | 5h | FE-018, BE-025 | Comparison interface |
-| **TS-006**: Write budget system tests | testing-specialist | 8h | BE-025, FE-020 | Budget test coverage |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-025**: Create budget analytics endpoints | backend-api-developer | BE-022 | Budget analytics API |
+| **FE-020**: Implement budget vs actual comparison | react-frontend-developer | FE-018, BE-025 | Comparison interface |
+| **TS-006**: Write budget system tests | testing-specialist | BE-025, FE-020 | Budget test coverage |
 
 ### Stage 4E - Budget System Integration
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **UI-004**: Create budget management E2E tests | playwright-ui-tester | 4h | FE-020 | Budget workflow tests |
-| **INTEGRATION-004**: Budget system integration testing | All Agents | 4h | All Phase 4 tasks | Complete budget system |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **UI-004**: Create budget management E2E tests | playwright-ui-tester | FE-020 | Budget workflow tests |
+| **INTEGRATION-004**: Budget system integration testing | All Agents | All Phase 4 tasks | Complete budget system |
 
 **Phase 4 Integration Checkpoint**: ✅ Complete budget management system with analytics
 
@@ -245,47 +245,47 @@
 
 ### Stage 5A - Analytics Infrastructure
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-026**: Create analytics aggregation service | backend-api-developer | 6h | BE-025 | Analytics engine |
-| **BE-027**: Implement spending trends endpoints | backend-api-developer | 5h | BE-026 | Trends API |
-| **FE-021**: Create main dashboard layout | react-frontend-developer | 5h | FE-020 | Dashboard structure |
-| **FE-022**: Implement Chart.js integration | react-frontend-developer | 6h | FE-021 | Chart library setup |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-026**: Create analytics aggregation service | backend-api-developer | BE-025 | Analytics engine |
+| **BE-027**: Implement spending trends endpoints | backend-api-developer | BE-026 | Trends API |
+| **FE-021**: Create main dashboard layout | react-frontend-developer | FE-020 | Dashboard structure |
+| **FE-022**: Implement Chart.js integration | react-frontend-developer | FE-021 | Chart library setup |
 
 ### Stage 5B - Category Analytics and Visualizations
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-028**: Create category analysis endpoints | backend-api-developer | 4h | BE-026 | Category analytics |
-| **BE-029**: Implement financial insights generation | backend-api-developer | 6h | BE-028 | Insights engine |
-| **FE-023**: Create spending trend visualizations | react-frontend-developer | 6h | FE-022, BE-027 | Trend charts |
-| **FE-024**: Implement category breakdown charts | react-frontend-developer | 5h | FE-023, BE-028 | Category visualizations |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-028**: Create category analysis endpoints | backend-api-developer | BE-026 | Category analytics |
+| **BE-029**: Implement financial insights generation | backend-api-developer | BE-028 | Insights engine |
+| **FE-023**: Create spending trend visualizations | react-frontend-developer | FE-022, BE-027 | Trend charts |
+| **FE-024**: Implement category breakdown charts | react-frontend-developer | FE-023, BE-028 | Category visualizations |
 
 ### Stage 5C - Advanced Analytics
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-030**: Add data export functionality | backend-api-developer | 4h | BE-029 | Export capabilities |
-| **BE-031**: Implement advanced filtering for analytics | backend-api-developer | 5h | BE-030 | Advanced filters |
-| **FE-025**: Add financial summary widgets | react-frontend-developer | 4h | FE-024 | Summary components |
-| **FE-026**: Create responsive dashboard design | react-frontend-developer | 4h | FE-025 | Mobile-responsive UI |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-030**: Add data export functionality | backend-api-developer | BE-029 | Export capabilities |
+| **BE-031**: Implement advanced filtering for analytics | backend-api-developer | BE-030 | Advanced filters |
+| **FE-025**: Add financial summary widgets | react-frontend-developer | FE-024 | Summary components |
+| **FE-026**: Create responsive dashboard design | react-frontend-developer | FE-025 | Mobile-responsive UI |
 
 ### Stage 5D - Comparative Analysis and Forecasting
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **BE-032**: Create comparative analysis endpoints | backend-api-developer | 6h | BE-031 | Comparative analytics |
-| **BE-033**: Add forecasting and projection logic | backend-api-developer | 8h | BE-032 | Forecasting engine |
-| **FE-027**: Create detailed analytics page | react-frontend-developer | 6h | FE-026 | Analytics interface |
-| **FE-028**: Implement interactive chart filtering | react-frontend-developer | 5h | FE-027 | Interactive charts |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **BE-032**: Create comparative analysis endpoints | backend-api-developer | BE-031 | Comparative analytics |
+| **BE-033**: Add forecasting and projection logic | backend-api-developer | BE-032 | Forecasting engine |
+| **FE-027**: Create detailed analytics page | react-frontend-developer | FE-026 | Analytics interface |
+| **FE-028**: Implement interactive chart filtering | react-frontend-developer | FE-027 | Interactive charts |
 
 ### Stage 5E - Analytics Integration and Testing
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **FE-029**: Add comparative period analysis UI | react-frontend-developer | 6h | FE-028, BE-032 | Comparison UI |
-| **TS-007**: Write comprehensive analytics tests | testing-specialist | 8h | BE-033, FE-029 | Analytics test suite |
-| **INTEGRATION-005**: Analytics system integration testing | All Agents | 4h | All Phase 5 tasks | Complete analytics system |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **FE-029**: Add comparative period analysis UI | react-frontend-developer | FE-028, BE-032 | Comparison UI |
+| **TS-007**: Write comprehensive analytics tests | testing-specialist | BE-033, FE-029 | Analytics test suite |
+| **INTEGRATION-005**: Analytics system integration testing | All Agents | All Phase 5 tasks | Complete analytics system |
 
 **Phase 5 Critical Milestone**: ✅ Complete dashboard and analytics functionality
 
@@ -295,47 +295,47 @@
 
 ### Stage 6A - Comprehensive Testing Setup
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **TS-008**: Create comprehensive integration test suite | testing-specialist | 8h | All systems | Full integration tests |
-| **UI-005**: Create complete user workflow E2E tests | playwright-ui-tester | 8h | FE-029 | Full workflow tests |
-| **FE-030**: Create data export UI components | react-frontend-developer | 4h | FE-029, BE-030 | Export interface |
-| **FE-031**: Implement financial forecasting displays | react-frontend-developer | 4h | FE-030, BE-033 | Forecasting UI |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **TS-008**: Create comprehensive integration test suite | testing-specialist | All systems | Full integration tests |
+| **UI-005**: Create complete user workflow E2E tests | playwright-ui-tester | FE-029 | Full workflow tests |
+| **FE-030**: Create data export UI components | react-frontend-developer | FE-029, BE-030 | Export interface |
+| **FE-031**: Implement financial forecasting displays | react-frontend-developer | FE-030, BE-033 | Forecasting UI |
 
 ### Stage 6B - Performance and Security Testing
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **TS-009**: Perform load testing and performance optimization | testing-specialist | 8h | TS-008 | Performance benchmarks |
-| **UI-006**: Create cross-browser compatibility tests | playwright-ui-tester | 8h | UI-005 | Cross-browser tests |
-| **BE-034**: Implement data caching for analytics | backend-api-developer | 4h | BE-033 | Performance caching |
-| **UX-005**: Final UI/UX review and refinements | ui-ux-designer | 4h | FE-031 | Final UI improvements |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **TS-009**: Perform load testing and performance optimization | testing-specialist | TS-008 | Performance benchmarks |
+| **UI-006**: Create cross-browser compatibility tests | playwright-ui-tester | UI-005 | Cross-browser tests |
+| **BE-034**: Implement data caching for analytics | backend-api-developer | BE-033 | Performance caching |
+| **UX-005**: Final UI/UX review and refinements | ui-ux-designer | FE-031 | Final UI improvements |
 
 ### Stage 6C - Security and Accessibility
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **TS-010**: Security testing and penetration testing | testing-specialist | 8h | BE-034 | Security audit report |
-| **UI-007**: Implement mobile responsiveness tests | playwright-ui-tester | 6h | UI-006 | Mobile testing suite |
-| **UI-008**: Create accessibility compliance tests | playwright-ui-tester | 4h | UI-007 | Accessibility tests |
-| **FE-032**: Final responsive design improvements | react-frontend-developer | 8h | UX-005 | Mobile-optimized UI |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **TS-010**: Security testing and penetration testing | testing-specialist | BE-034 | Security audit report |
+| **UI-007**: Implement mobile responsiveness tests | playwright-ui-tester | UI-006 | Mobile testing suite |
+| **UI-008**: Create accessibility compliance tests | playwright-ui-tester | UI-007 | Accessibility tests |
+| **FE-032**: Final responsive design improvements | react-frontend-developer | UX-005 | Mobile-optimized UI |
 
 ### Stage 6D - Pre-Production Preparation
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **TS-011**: User acceptance testing coordination | testing-specialist | 8h | TS-010, UI-008 | UAT results |
-| **BE-035**: Production configuration and optimization | backend-api-developer | 4h | TS-010 | Production-ready backend |
-| **FE-033**: Production build optimization | react-frontend-developer | 4h | FE-032 | Production-ready frontend |
-| **UI-009**: Final end-to-end testing in staging environment | playwright-ui-tester | 8h | BE-035, FE-033 | Staging validation |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **TS-011**: User acceptance testing coordination | testing-specialist | TS-010, UI-008 | UAT results |
+| **BE-035**: Production configuration and optimization | backend-api-developer | TS-010 | Production-ready backend |
+| **FE-033**: Production build optimization | react-frontend-developer | FE-032 | Production-ready frontend |
+| **UI-009**: Final end-to-end testing in staging environment | playwright-ui-tester | BE-035, FE-033 | Staging validation |
 
 ### Stage 6E - Production Deployment and Launch
 
-| Task | Agent | Estimated Effort | Dependencies | Deliverables |
-|------|-------|------------------|--------------|--------------|
-| **DEPLOYMENT-001**: Production deployment | All Agents | 3h | All systems ready | Live application |
-| **DEPLOYMENT-002**: Production smoke testing | testing-specialist, playwright-ui-tester | 2h | DEPLOYMENT-001 | Production validation |
-| **DEPLOYMENT-003**: Launch monitoring and support setup | All Agents | 2h | DEPLOYMENT-002 | Monitoring systems |
+| Task | Agent | Dependencies | Deliverables |
+|------|-------|--------------|--------------|
+| **DEPLOYMENT-001**: Production deployment | All Agents | All systems ready | Live application |
+| **DEPLOYMENT-002**: Production smoke testing | testing-specialist, playwright-ui-tester | DEPLOYMENT-001 | Production validation |
+| **DEPLOYMENT-003**: Launch monitoring and support setup | All Agents | DEPLOYMENT-002 | Monitoring systems |
 
 **Final Integration Checkpoint**: ✅ Production system fully operational and validated
 
