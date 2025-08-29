@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: finance_tracker_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: finance_tracker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+      - ./docker/postgres/config/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: >
+      postgres 
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c log_destination=stderr
+      -c logging_collector=on
+      -c log_directory=/var/lib/postgresql/data/logs
+      -c log_filename=postgresql-%Y-%m-%d_%H%M%S.log
+      -c log_statement=all
+      -c log_min_duration_statement=1000
+    networks:
+      - finance_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d finance_tracker"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis Cache Service
+  redis:
+    image: redis:7-alpine
+    container_name: finance_tracker_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - finance_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # pgAdmin for Database Management (Development only)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: finance_tracker_pgadmin
+    restart: unless-stopped
+    profiles:
+      - dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@finance-tracker.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+    networks:
+      - finance_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Redis Insight for Redis Management (Development only)
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: finance_tracker_redis_insight
+    restart: unless-stopped
+    profiles:
+      - dev
+    ports:
+      - "8001:8001"
+    volumes:
+      - redis_insight_data:/db
+    networks:
+      - finance_network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+# Named volumes for data persistence
+volumes:
+  postgres_data:
+    driver: local
+    name: finance_tracker_postgres_data
+  redis_data:
+    driver: local
+    name: finance_tracker_redis_data
+  pgadmin_data:
+    driver: local
+    name: finance_tracker_pgadmin_data
+  redis_insight_data:
+    driver: local
+    name: finance_tracker_redis_insight_data
+
+# Custom network for service communication
+networks:
+  finance_network:
+    driver: bridge
+    name: finance_tracker_network

@@ -1,0 +1,78 @@
+{
+  "name": "personal-finance-tracker-api",
+  "version": "1.0.0",
+  "description": "Backend API for Personal Finance Tracker application",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "start:dev": "ts-node src/server.ts",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:clean": "docker-compose down -v --remove-orphans",
+    "db:up": "docker-compose up -d postgres",
+    "db:down": "docker-compose stop postgres",
+    "db:logs": "docker-compose logs -f postgres",
+    "db:reset": "docker-compose down postgres && docker volume rm finance_tracker_postgres_data && docker-compose up -d postgres",
+    "redis:up": "docker-compose up -d redis",
+    "redis:down": "docker-compose stop redis",
+    "redis:logs": "docker-compose logs -f redis",
+    "redis:flush": "docker-compose exec redis redis-cli FLUSHALL",
+    "services:up": "docker-compose up -d postgres redis",
+    "services:down": "docker-compose stop postgres redis",
+    "services:status": "docker-compose ps",
+    "dev:full": "npm run services:up && npm run dev",
+    "dev:services": "docker-compose --profile dev up -d",
+    "dev:clean": "npm run docker:clean && npm run dev:services"
+  },
+  "keywords": [
+    "finance",
+    "api",
+    "express",
+    "typescript",
+    "personal-finance"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/pg": "^8.15.5",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "ioredis": "^5.7.0",
+    "joi": "^17.12.3",
+    "module-alias": "^2.2.3",
+    "morgan": "^1.10.0",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "_moduleAliases": {
+    "@": "dist"
+  }
+}
