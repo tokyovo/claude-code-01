@@ -10,23 +10,33 @@
 ## Agent Roles & Responsibilities
 
 ### backend-api-developer
+
 **Primary Focus**: Server-side architecture, database design, API endpoints, security
+
 **Key Technologies**: Node.js, Express, TypeScript, PostgreSQL, Redis, JWT
 
-### react-frontend-developer  
+### react-frontend-developer
+
 **Primary Focus**: User interface components, state management, user experience
+
 **Key Technologies**: React, TypeScript, Redux Toolkit, Tailwind CSS, React Router
 
 ### ui-ux-designer
+
 **Primary Focus**: Design systems, user experience, responsive design, accessibility
+
 **Key Technologies**: Figma integration, CSS architecture, mobile-first design
 
 ### testing-specialist
+
 **Primary Focus**: Unit testing, integration testing, test automation, code quality
+
 **Key Technologies**: Jest, React Testing Library, API testing, test coverage
 
 ### playwright-ui-tester
+
 **Primary Focus**: End-to-end testing, user workflow validation, cross-browser testing
+
 **Key Technologies**: Playwright, automated UI testing, accessibility testing
 
 ---
