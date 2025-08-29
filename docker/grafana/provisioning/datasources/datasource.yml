@@ -1,0 +1,64 @@
+# =================================
+# Grafana Datasources Configuration
+# Personal Finance Tracker - Monitoring Datasources
+# =================================
+
+apiVersion: 1
+
+datasources:
+  # Prometheus Datasource
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "60s"
+      httpMethod: "POST"
+    secureJsonData: {}
+
+  # PostgreSQL Datasource (for direct database queries)
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: personal_finance_tracker
+    user: ${POSTGRES_USER}
+    isDefault: false
+    editable: true
+    jsonData:
+      sslmode: "disable"
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      timescaledb: false
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+
+  # InfluxDB Datasource (if using InfluxDB for time series)
+  # - name: InfluxDB
+  #   type: influxdb
+  #   access: proxy
+  #   url: http://influxdb:8086
+  #   database: finance_tracker_metrics
+  #   user: admin
+  #   isDefault: false
+  #   editable: true
+  #   jsonData:
+  #     timeInterval: "15s"
+  #     httpMode: "GET"
+  #   secureJsonData:
+  #     password: ${INFLUXDB_PASSWORD}
+
+  # Loki Datasource (for log aggregation)
+  # - name: Loki
+  #   type: loki
+  #   access: proxy
+  #   url: http://loki:3100
+  #   isDefault: false
+  #   editable: true
+  #   jsonData:
+  #     maxLines: 1000
+  #     timeout: "60s"

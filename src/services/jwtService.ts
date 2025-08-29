@@ -48,13 +48,13 @@ export class JwtService {
         expiresIn: config.JWT_EXPIRES_IN,
         issuer: 'finance-tracker-api',
         audience: 'finance-tracker-app'
-      });
+      } as jwt.SignOptions);
 
       const refreshToken = jwt.sign(refreshPayload, config.JWT_REFRESH_SECRET, {
         expiresIn: config.JWT_REFRESH_EXPIRES_IN,
         issuer: 'finance-tracker-api',
         audience: 'finance-tracker-app'
-      });
+      } as jwt.SignOptions);
 
       // Store tokens in Redis for session management
       await this.storeTokens(userId, accessToken, refreshToken, accessTokenExpiry, refreshTokenExpiry);

@@ -60,10 +60,15 @@ try {
 const getRateLimitStore = () => {
   if (redisClient && config.NODE_ENV === 'production') {
     // Use Redis store in production
-    const RedisStore = require('rate-limit-redis');
-    return new RedisStore({
-      sendCommand: (...args: any[]) => redisClient!.call(...args),
-    });
+    try {
+      const RedisStore = require('rate-limit-redis');
+      return new (RedisStore.default || RedisStore)({
+        sendCommand: (...args: any[]) => redisClient!.call(...args),
+      });
+    } catch (error) {
+      console.warn('Redis store unavailable, falling back to memory store');
+      return undefined;
+    }
   }
   // Use memory store in development or if Redis is unavailable
   return undefined;

@@ -1,0 +1,43 @@
+# =================================
+# Grafana Dashboards Provisioning Configuration
+# Personal Finance Tracker - Dashboard Configuration
+# =================================
+
+apiVersion: 1
+
+providers:
+  # Personal Finance Tracker Application Dashboards
+  - name: 'finance-tracker-dashboards'
+    orgId: 1
+    folder: 'Personal Finance Tracker'
+    folderUid: 'finance_tracker'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/finance-tracker
+
+  # System and Infrastructure Dashboards
+  - name: 'system-dashboards'
+    orgId: 1
+    folder: 'System Monitoring'
+    folderUid: 'system'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/system
+
+  # Database Monitoring Dashboards
+  - name: 'database-dashboards'
+    orgId: 1
+    folder: 'Database Monitoring'
+    folderUid: 'database'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/database

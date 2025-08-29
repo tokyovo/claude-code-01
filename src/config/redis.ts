@@ -9,7 +9,7 @@ const redisOptions: RedisOptions = {
   // Connection settings
   connectTimeout: 10000, // 10 seconds
   commandTimeout: 5000, // 5 seconds
-  retryDelayOnFailover: 100,
+  lazyConnect: true,
   enableReadyCheck: true,
   maxRetriesPerRequest: 3,
   

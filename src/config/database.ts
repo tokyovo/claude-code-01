@@ -187,42 +187,11 @@ export const healthCheck = async (): Promise<{
   }
 };
 
-// Utility functions for common database operations
-export const dbUtils = {
-  // Execute a query and return the first row
-  queryOne: async (text: string, params?: any[]) => {
-    const result = await query(text, params);
-    return result.rows[0] || null;
-  },
-  
-  // Execute a query and return all rows
-  queryMany: async (text: string, params?: any[]) => {
-    const result = await query(text, params);
-    return result.rows;
-  },
-  
-  // Check if a record exists
-  exists: async (table: string, condition: string, params?: any[]) => {
-    const result = await query(
-      `SELECT EXISTS(SELECT 1 FROM ${table} WHERE ${condition})`,
-      params
-    );
-    return result.rows[0].exists;
-  },
-  
-  // Count records
-  count: async (table: string, condition?: string, params?: any[]) => {
-    const whereClause = condition ? `WHERE ${condition}` : '';
-    const result = await query(
-      `SELECT COUNT(*) as count FROM ${table} ${whereClause}`,
-      params
-    );
-    return parseInt(result.rows[0].count, 10);
-  }
-};
+// Utility functions are imported from knex.ts to avoid duplication
 
-// Export Knex utilities for modern database operations
-export { db, dbUtils as knexUtils, knexTestConnection, knexHealthCheck, migrationUtils };
+// Export Knex utilities for modern database operations  
+export { db, knexTestConnection, knexHealthCheck, migrationUtils };
+export const knexUtils = dbUtils;
 
 // Export pool for direct access if needed (backward compatibility)
 export default pool;

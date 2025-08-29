@@ -1,0 +1,140 @@
+# =================================
+# Docker Compose SSL Configuration
+# Personal Finance Tracker - SSL/HTTPS with Certbot
+# =================================
+
+version: '3.8'
+
+services:
+  # =================================
+  # Nginx with SSL
+  # =================================
+  nginx:
+    image: nginx:alpine
+    container_name: finance_tracker_nginx_ssl
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx configuration
+      - ./docker/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      
+      # SSL certificates
+      - ./ssl/certs:/etc/ssl/certs:ro
+      - ./ssl/dhparam:/etc/ssl/dhparam:ro
+      
+      # Let's Encrypt challenge
+      - ./ssl/webroot:/var/www/certbot:ro
+      
+      # Logs
+      - nginx_logs:/var/log/nginx
+    networks:
+      - finance_network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.finance-tracker.service=nginx"
+      - "com.finance-tracker.environment=production"
+
+  # =================================
+  # Certbot for Let's Encrypt
+  # =================================
+  certbot:
+    image: certbot/certbot:latest
+    container_name: finance_tracker_certbot
+    restart: "no"
+    profiles:
+      - ssl-setup
+    volumes:
+      # Certificate storage
+      - ./ssl/certs:/etc/letsencrypt/live/yourdomain.com:rw
+      - ./ssl/archive:/etc/letsencrypt/archive/yourdomain.com:rw
+      - ./ssl/renewal:/etc/letsencrypt/renewal:rw
+      
+      # Let's Encrypt challenge
+      - ./ssl/webroot:/var/www/certbot:rw
+      
+      # Certbot configuration
+      - ./ssl/letsencrypt:/etc/letsencrypt:rw
+    environment:
+      - DOMAIN=${DOMAIN:-yourdomain.com}
+      - EMAIL=${SSL_EMAIL:-admin@yourdomain.com}
+    command: >
+      certonly --webroot
+      --webroot-path=/var/www/certbot
+      --email ${SSL_EMAIL:-admin@yourdomain.com}
+      --agree-tos
+      --no-eff-email
+      --force-renewal
+      -d ${DOMAIN:-yourdomain.com}
+    networks:
+      - finance_network
+
+  # =================================
+  # Certificate Renewal Service
+  # =================================
+  ssl-renewer:
+    image: certbot/certbot:latest
+    container_name: finance_tracker_ssl_renewer
+    restart: "no"
+    profiles:
+      - ssl-renewal
+    volumes:
+      # Same volumes as certbot
+      - ./ssl/certs:/etc/letsencrypt/live/yourdomain.com:rw
+      - ./ssl/archive:/etc/letsencrypt/archive/yourdomain.com:rw
+      - ./ssl/renewal:/etc/letsencrypt/renewal:rw
+      - ./ssl/webroot:/var/www/certbot:rw
+      - ./ssl/letsencrypt:/etc/letsencrypt:rw
+      
+      # Renewal script
+      - ./ssl/scripts:/scripts:ro
+    environment:
+      - DOMAIN=${DOMAIN:-yourdomain.com}
+      - EMAIL=${SSL_EMAIL:-admin@yourdomain.com}
+    command: >
+      sh -c "
+      certbot renew --quiet --webroot --webroot-path=/var/www/certbot &&
+      /scripts/reload-nginx.sh
+      "
+    networks:
+      - finance_network
+    depends_on:
+      - nginx
+
+  # =================================
+  # SSL Security Scanner (Optional)
+  # =================================
+  ssl-scanner:
+    image: nablac0d3/sslyze:latest
+    container_name: finance_tracker_ssl_scanner
+    restart: "no"
+    profiles:
+      - ssl-testing
+    command: >
+      --regular ${DOMAIN:-yourdomain.com}:443
+    networks:
+      - finance_network
+
+# =================================
+# SSL-specific Volumes
+# =================================
+volumes:
+  nginx_logs:
+    driver: local
+    name: finance_tracker_nginx_logs_ssl
+
+# =================================
+# Network Configuration
+# =================================
+networks:
+  finance_network:
+    driver: bridge
+    name: finance_tracker_network_ssl
